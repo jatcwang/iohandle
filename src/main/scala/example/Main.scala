@@ -19,7 +19,7 @@ object Main extends IOApp.Simple {
 //      IO.println(e.msg)
 //    .void
 
-    handling[MyError]:
+    ioHandling[MyError]:
       for
         _ <- hey(1)
         res <- IO.pure("success")
@@ -30,6 +30,6 @@ object Main extends IOApp.Simple {
         case Right(s) => println(s)
 
   def hey[A](a: A)(using IORaise[MyError]): IO[A] =
-    abort(MyDetailedError("MyDetailedError happened"))
+    ioAbort(MyDetailedError("MyDetailedError happened"))
 
 }

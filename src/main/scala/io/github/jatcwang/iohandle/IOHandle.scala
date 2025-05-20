@@ -24,11 +24,11 @@ private[iohandle] class IOHandlePartiallyApplied[E] {
     implicit a: A => f
 }
 
-private[iohandle] class HandledIO[E, A](val body: Handle[IO, E] => IO[A]) extends AnyVal {
+private[iohandle] class HandledIO[E, A](private val body: Handle[IO, E] => IO[A]) extends AnyVal {
   def createIOHandle: IOHandle[E] =
     new IOHandle[E](new AnyRef)
-
-  def rescue(handler: E => IO[A]): IO[A] = {
+    
+  def rescueWith(handler: E => IO[A]): IO[A] = {
     val ioHandle = createIOHandle
 
     ioHandle.handleWith(body(ioHandle))(handler)
