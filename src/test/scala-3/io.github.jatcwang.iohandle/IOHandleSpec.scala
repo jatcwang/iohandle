@@ -9,6 +9,7 @@ import cats.effect.IO
 class IOHandleSpec extends CatsEffectSuite {
 
   test("ioHandling: Handle errors") {
+
     val prog = ioHandling[MyError]:
       ioAbort(MyError.NotFound())
         .map(_ => Right(()))
@@ -19,8 +20,18 @@ class IOHandleSpec extends CatsEffectSuite {
     prog.assertEquals(Left("not found"))
   }
 
-  test("ioHandling reuses existing IOHandle instance in scope") {
-    ???
+  test("Nesting works") {
+    val prog =
+      ioHandling[MyError.NotFound]:
+        ioHandling[MyError]:
+          oops()
+        .rescueWith:
+          case MyError.NotFound() => IO.pure(Left("inner"))
+          case MyError.Broken()   => IO.pure(Left("broken"))
+      .rescueWith:
+        case MyError.NotFound() => IO.pure(Left("outer"))
+
+    prog.assertEquals(Left("outer"))
   }
 
   test("ioHandling fails to compile if a Raise[IO, E] (but not Handle[IO, E]) instance is already in scope") {
@@ -34,5 +45,7 @@ class IOHandleSpec extends CatsEffectSuite {
       case MyError.Broken()   => IO.pure(Left("not good"))
     io.assertEquals(Left("not found"))
   }
+
+  def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
 
 }
