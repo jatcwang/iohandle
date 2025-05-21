@@ -23,3 +23,11 @@ inline def ioHandling[E]: IOHandlePartiallyApplied[E] = {
 }
 
 inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = raise.raise(e)
+
+extension [A](io: IO[A]) {
+  def recoverUnhandled[B >: A](pf: PartialFunction[Throwable, B]): IO[B] = io.recoverWith {
+    case e: Submarine[?] => IO.raiseError(e)
+    case e: Throwable    => io.recover(pf)
+  }
+
+}
