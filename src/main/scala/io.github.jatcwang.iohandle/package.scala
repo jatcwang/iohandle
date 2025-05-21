@@ -6,7 +6,6 @@ import cats.mtl.{Handle, Raise}
 import scala.compiletime.summonFrom
 
 type IORaise[-E] = Raise[IO, E]
-type IOHandle[E] = Handle[IO, E]
 
 inline def ioHandling[E]: IOHandlePartiallyApplied[E] = {
   val handle = impl.createIOHandle[E]
