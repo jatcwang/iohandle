@@ -11,7 +11,8 @@ but specialized for `cats.effect.IO` with some additional safety.
 # Inspirations & Comparisons
 
 - ["Submarine Error Handling" PR in cats-mtl](https://github.com/typelevel/cats-mtl/pull/619)
-    - Difference: We provide additional safety/debugging in case the Raise/Handle capability is leaked outside its context
+    - Difference: IOHandle library aims to provide additional safety/debugging, for example when the `Raise`/`Handle` 
+      instance is leaked outside its original scope
 - ValdemarGr's [catch-effect](https://github.com/ValdemarGr/catch-effect) library
     - Difference: We rely on `IO.raiseError` instead of IO cancellation
 
