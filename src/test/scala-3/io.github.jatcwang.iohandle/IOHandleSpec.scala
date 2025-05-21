@@ -1,10 +1,10 @@
 package io.github.jatcwang.iohandle
 
+import cats.effect.IO
+import cats.syntax.all.*
 import io.github.jatcwang.iohandle.testtypes.MyError
 import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
 import munit.CatsEffectSuite
-import cats.syntax.all.*
-import cats.effect.IO
 
 class IOHandleSpec extends CatsEffectSuite {
 
@@ -46,6 +46,15 @@ class IOHandleSpec extends CatsEffectSuite {
     io.assertEquals(Left("not found"))
   }
 
-  def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
+  test("ioHandle recoverUnhandled") {
+    val io = ioHandling[String]:
+      boom.recoverUnhandled:
+        case _ => Right(())
+    .rescueWith(str => IO.pure(Left(str)))
 
+    io.assertEquals(Left("boom!"))
+  }
+
+  def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
+  def boom(using IORaise[String]): IO[Nothing] = ioAbort("boom!")
 }
