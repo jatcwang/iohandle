@@ -2,6 +2,21 @@ import org.typelevel.sbt.tpolecat.DevMode
 
 ThisBuild / tpolecatDefaultOptionsMode := DevMode
 
+ThisBuild / tlBaseVersion := "0.1" // your current series x.y
+
+ThisBuild / organization := "io.github.jatcwang"
+ThisBuild / organizationName := "IOHandle"
+ThisBuild / startYear := Some(2025)
+ThisBuild / licenses := Seq(License.Apache2)
+ThisBuild / developers ++= List(
+  tlGitHubDev("jatcwang", "Jacob Wang"),
+)
+
+//val Scala3 = "3.3.6"
+val Scala3 = "3.6.4"
+ThisBuild / crossScalaVersions := Seq("2.13.11", Scala3)
+ThisBuild / scalaVersion := Scala3 // the default Scala
+
 lazy val root = Project("root", file("."))
   .settings(commonSettings)
   .settings(
@@ -13,9 +28,9 @@ lazy val root = Project("root", file("."))
       "org.scalameta" %% "munit" % "1.1.0" % Test,
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
     ),
+    crossScalaVersions := Seq("3.6.4", "2.13.16"),
+    scalacOptions ++= (if (true) Seq() else Seq.empty),
   )
 
 lazy val commonSettings = Seq(
-  version := "0.1.0",
-  scalaVersion := "3.6.4",
 )
