@@ -1,6 +1,3 @@
-import org.typelevel.sbt.tpolecat.DevMode
-
-ThisBuild / tpolecatDefaultOptionsMode := DevMode
 
 ThisBuild / tlBaseVersion := "0.1" // your current series x.y
 
