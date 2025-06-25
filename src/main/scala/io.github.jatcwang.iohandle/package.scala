@@ -1,3 +1,10 @@
 package io.github.jatcwang
 
-package object iohandle extends IOHandlePlatform {}
+import cats.mtl.Raise
+import cats.effect.IO
+
+package object iohandle extends IOHandlePlatform {
+
+  type IORaise[-E] = Raise[IO, E]
+
+}

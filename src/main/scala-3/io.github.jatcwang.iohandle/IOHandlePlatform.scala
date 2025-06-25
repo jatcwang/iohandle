@@ -2,7 +2,6 @@ package io.github.jatcwang.iohandle
 
 import cats.effect.IO
 import scala.compiletime.summonFrom
-import IOHandleShared.IORaise
 
 trait IOHandlePlatform {
 
