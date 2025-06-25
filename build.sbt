@@ -14,7 +14,7 @@ ThisBuild / developers ++= List(
 
 //val Scala3 = "3.3.6"
 val Scala3 = "3.6.4"
-ThisBuild / crossScalaVersions := Seq("2.13.11", Scala3)
+ThisBuild / crossScalaVersions := Seq("2.13.16", Scala3)
 ThisBuild / scalaVersion := Scala3 // the default Scala
 
 lazy val root = Project("root", file("."))
@@ -28,7 +28,6 @@ lazy val root = Project("root", file("."))
       "org.scalameta" %% "munit" % "1.1.0" % Test,
       "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
     ),
-    crossScalaVersions := Seq("3.6.4", "2.13.16"),
     scalacOptions ++= (if (true) Seq() else Seq.empty),
   )
 
