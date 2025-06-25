@@ -21,6 +21,16 @@ inline def ioHandling[E]: IOHandlePartiallyApplied[E] = {
 //  }
 }
 
+private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) extends AnyVal {
+  inline def apply[A](inline f: IOHandle[E] ?=> IO[A]): IOHandlePendingRescue[E, A] = new IOHandlePendingRescue(
+    convert(f),
+    handle,
+  )
+
+  private inline def convert[A, B](inline f: A ?=> B): A => B =
+    implicit a: A => f
+}
+
 inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = raise.raise(e)
 
 extension [A](io: IO[A]) {
