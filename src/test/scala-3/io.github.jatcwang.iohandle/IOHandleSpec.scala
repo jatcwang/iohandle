@@ -5,6 +5,7 @@ import cats.syntax.all.*
 import io.github.jatcwang.iohandle.testtypes.MyError
 import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
 import munit.CatsEffectSuite
+import IOHandleShared.IORaise
 
 class IOHandleSpec extends CatsEffectSuite {
 

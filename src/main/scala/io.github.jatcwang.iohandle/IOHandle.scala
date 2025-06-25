@@ -19,7 +19,6 @@ trait IOHandle[E] extends Handle[IO, E] { self =>
 }
 
 class IOHandleImpl[E] private[iohandle] (marker: AnyRef) extends IOHandle[E] { self =>
-
   override def handleWith[A](fa: IO[A])(f: E => IO[A]): IO[A] =
     fa.handleErrorWith {
       case Submarine(e, m) if m == marker => f(e.asInstanceOf[E])
