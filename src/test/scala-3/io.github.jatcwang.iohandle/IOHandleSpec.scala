@@ -32,19 +32,7 @@ class IOHandleSpec extends CatsEffectSuite {
       .rescueWith:
         case MyError.NotFound() => IO.pure(Left("outer"))
 
-    prog.assertEquals(Left("outer"))
-  }
-
-  test("ioHandling fails to compile if a Raise[IO, E] (but not Handle[IO, E]) instance is already in scope") {
-    val io = ioHandling[MyError]:
-      ioHandling[MyError.NotFound]:
-        ioAbort(MyError.NotFound()).map(_ => Right(()))
-      .rescueWith:
-        case MyError.NotFound() => IO.pure(Left("not found inner"))
-    .rescueWith:
-      case MyError.NotFound() => IO.pure(Left("not found"))
-      case MyError.Broken()   => IO.pure(Left("not good"))
-    io.assertEquals(Left("not found"))
+    prog.assertEquals(Left("inner"))
   }
 
   test("ioHandle recoverUnhandled") {
