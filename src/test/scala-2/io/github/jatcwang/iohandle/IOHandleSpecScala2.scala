@@ -8,7 +8,7 @@ class IOHandleSpecScala2 extends CatsEffectSuite {
 
     test("ioHandling: Handle errors") {
 
-      val prog = ioHandling[MyError]:
+      val prog = ioHandling[MyError]
         ioAbort(MyError.NotFound())
           .map(_ => Right(()))
       .rescueWith:
