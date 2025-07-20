@@ -1,4 +1,3 @@
-
 ThisBuild / tlBaseVersion := "0.1" // your current series x.y
 
 ThisBuild / organization := "io.github.jatcwang"
@@ -9,10 +8,12 @@ ThisBuild / developers ++= List(
   tlGitHubDev("jatcwang", "Jacob Wang"),
 )
 
+val Scala2 = "2.13.16"
 //val Scala3 = "3.3.6"
 val Scala3 = "3.6.4"
-ThisBuild / crossScalaVersions := Seq("2.13.16", Scala3)
-ThisBuild / scalaVersion := Scala3 // the default Scala
+ThisBuild / crossScalaVersions := Seq(Scala2, Scala3)
+ThisBuild / scalaVersion := Scala2 // the default Scala
+//ThisBuild / scalaVersion := Scala3 // the default Scala
 
 lazy val root = Project("root", file("."))
   .settings(commonSettings)

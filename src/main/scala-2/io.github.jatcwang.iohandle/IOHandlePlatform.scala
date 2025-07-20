@@ -2,7 +2,6 @@ package io.github.jatcwang.iohandle
 
 import cats.effect.IO
 
-
 trait IOHandlePlatform {
 
   def ioHandling[E]: IOHandlePartiallyApplied[E] = {
@@ -11,12 +10,14 @@ trait IOHandlePlatform {
   }
 
   private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
-    def apply[A](f: IOHandle[E] => IO[A]): IOHandlePendingRescue[E,A] = new IOHandlePendingRescue(
-     f,
-      handle
+    def apply[A](f: IOHandle[E] => IO[A]): IOHandlePendingRescue[E, A] = new IOHandlePendingRescue(
+      f,
+      handle,
     )
   }
 
+  def ioAbort[E, E1 <: E](e: E1)(implicit raise: IORaise[E]): IO[Nothing] =
+    raise.raise(e)
 
   // TODO:  eliminate allocation
 //  private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
@@ -36,6 +37,5 @@ trait IOHandlePlatform {
 //      case e: Submarine[?] => IO.raiseError(e)
 //      case e: Throwable    => io.recover(pf)
 //    }
-
 
 }
