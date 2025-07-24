@@ -1,14 +1,24 @@
-package io.github.jatcwang.iohandle
+package iohandletest
 
 import cats.effect.IO
 import cats.syntax.all.*
-import io.github.jatcwang.iohandle.testtypes.MyError
-import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
+import iohandletest.testtypes.*
+import io.github.jatcwang.iohandle.{ioHandling, ioAbort, IORaise, recoverUnhandled}
 import munit.CatsEffectSuite
 
 class IOHandleSpec extends CatsEffectSuite {
 
-  test("ioHandling: Handle errors") {
+  test(".rescueWith success case") {
+    val prog = ioHandling[MyError]:
+      IO(Right("success"))
+    .rescueWith:
+      case MyError.NotFound() => IO.pure(Left("not found"))
+      case MyError.Broken()   => IO.pure(Left("not good"))
+
+    prog.assertEquals(Right("success"))
+  }
+
+  test(".rescueWith error case") {
 
     val prog = ioHandling[MyError]:
       ioAbort(MyError.NotFound())
@@ -20,6 +30,15 @@ class IOHandleSpec extends CatsEffectSuite {
     prog.assertEquals(Left("not found"))
   }
 
+  test(".toEither error case") {
+    val prog = ioHandling[MyError]:
+      ioAbort(MyError.NotFound())
+      .as("shouldn't have succeeded")
+    .toEither
+
+    prog.assertEquals(Left(MyError.NotFound()))
+  }
+  
   test("Nesting works") {
     val prog =
       ioHandling[MyError.NotFound]:
@@ -31,24 +50,12 @@ class IOHandleSpec extends CatsEffectSuite {
       .rescueWith:
         case MyError.NotFound() => IO.pure(Left("outer"))
 
-    prog.assertEquals(Left("outer"))
-  }
-
-  test("ioHandling fails to compile if a Raise[IO, E] (but not Handle[IO, E]) instance is already in scope") {
-    val io = ioHandling[MyError]:
-      ioHandling[MyError.NotFound]:
-        ioAbort(MyError.NotFound()).map(_ => Right(()))
-      .rescueWith:
-        case MyError.NotFound() => IO.pure(Left("not found inner"))
-    .rescueWith:
-      case MyError.NotFound() => IO.pure(Left("not found"))
-      case MyError.Broken()   => IO.pure(Left("not good"))
-    io.assertEquals(Left("not found"))
+    prog.assertEquals(Left("inner"))
   }
 
   test("ioHandle recoverUnhandled") {
     val io = ioHandling[String]:
-      boom.recoverUnhandled:
+      boomStr.recoverUnhandled:
         case _ => Right(())
     .rescueWith(str => IO.pure(Left(str)))
 
@@ -56,5 +63,5 @@ class IOHandleSpec extends CatsEffectSuite {
   }
 
   def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
-  def boom(using IORaise[String]): IO[Nothing] = ioAbort("boom!")
+  def boomStr(using IORaise[String]): IO[Nothing] = ioAbort("boom!")
 }

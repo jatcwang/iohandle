@@ -1,4 +1,4 @@
-package io.github.jatcwang.iohandle
+package iohandletest
 
 object testtypes {
   sealed trait MyError
