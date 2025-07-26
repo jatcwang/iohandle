@@ -7,6 +7,7 @@ ThisBuild / licenses := Seq(License.Apache2)
 ThisBuild / developers ++= List(
   tlGitHubDev("jatcwang", "Jacob Wang"),
 )
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"))
 
 val Scala2 = "2.13.16"
 //val Scala3 = "3.3.6"
