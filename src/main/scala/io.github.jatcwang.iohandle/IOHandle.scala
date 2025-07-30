@@ -21,6 +21,7 @@ import cats.effect.IO
 import cats.mtl.Handle
 
 import scala.util.control.NoStackTrace
+import cats.data.Ior
 
 trait IOHandle[E] extends Handle[IO, E] { self =>
   override def applicative: Applicative[IO] = IO.asyncForIO
@@ -63,5 +64,9 @@ private[iohandle] class IOHandlePendingRescue[E, A](
 
   def toEither: IO[Either[E, A]] = {
     ioHandle.handleWith[Either[E, A]](body(ioHandle).map(Right(_)))(e => IO.pure(Left(e)))
+  }
+
+  def toIor: IO[Ior[E, A]] = {
+    ioHandle.handleWith[Ior[E, A]](body(ioHandle).map(Ior.Right(_)))(e => IO.pure(Ior.Left(e)))
   }
 }
