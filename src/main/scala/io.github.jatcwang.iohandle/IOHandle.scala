@@ -63,9 +63,9 @@ private[iohandle] class IOHandlePendingRescue[E, A](
   }
 
   def toEither: IO[Either[E, A]] = {
-    ioHandle.handleWith[Either[E, A]](body(ioHandle).map(Right(_)))( e => IO.pure(Left(e)) )
+    ioHandle.handleWith[Either[E, A]](body(ioHandle).map(Right(_)))(e => IO.pure(Left(e)))
   }
 
   def toEitherT: EitherT[IO, E, A] = EitherT(toEither)
-  
+
 }

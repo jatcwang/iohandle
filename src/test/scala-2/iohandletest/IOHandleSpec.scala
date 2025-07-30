@@ -32,7 +32,7 @@ class IOHandleSpec extends CatsEffectSuite {
     }
       .rescueWith {
         case MyError.NotFound() => IO.pure("not found")
-        case MyError.Broken() => IO.pure("not good")
+        case MyError.Broken()   => IO.pure("not good")
       }
 
     prog.assertEquals("success")
@@ -46,7 +46,7 @@ class IOHandleSpec extends CatsEffectSuite {
     }
       .rescueWith {
         case MyError.NotFound() => IO.pure("not found")
-        case MyError.Broken() => IO.pure("not good")
+        case MyError.Broken()   => IO.pure("not good")
       }
 
     prog.assertEquals("not found")
@@ -61,7 +61,6 @@ class IOHandleSpec extends CatsEffectSuite {
 
     prog.assertEquals(Left(MyError.NotFound()))
   }
-
 
   test(".toEitherT success case") {
     val prog = ioHandling[MyError] { implicit handle =>
