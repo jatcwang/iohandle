@@ -17,6 +17,7 @@
 package io.github.jatcwang.iohandle
 
 import cats.Applicative
+import cats.data.EitherT
 import cats.effect.IO
 import cats.mtl.Handle
 
@@ -65,6 +66,8 @@ private[iohandle] class IOHandlePendingRescue[E, A](
   def toEither: IO[Either[E, A]] = {
     ioHandle.handleWith[Either[E, A]](body(ioHandle).map(Right(_)))(e => IO.pure(Left(e)))
   }
+
+  def toEitherT: EitherT[IO, E, A] = EitherT(toEither)
 
   def toIor: IO[Ior[E, A]] = {
     ioHandle.handleWith[Ior[E, A]](body(ioHandle).map(Ior.Right(_)))(e => IO.pure(Ior.Left(e)))
