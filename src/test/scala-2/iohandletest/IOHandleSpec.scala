@@ -16,6 +16,7 @@
 
 package iohandletest
 
+import cats.data.EitherT
 import cats.effect.*
 import iohandletest.testtypes.*
 import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
@@ -31,7 +32,7 @@ class IOHandleSpec extends CatsEffectSuite {
     }
       .rescueWith {
         case MyError.NotFound() => IO.pure("not found")
-        case MyError.Broken()   => IO.pure("not good")
+        case MyError.Broken() => IO.pure("not good")
       }
 
     prog.assertEquals("success")
@@ -45,7 +46,7 @@ class IOHandleSpec extends CatsEffectSuite {
     }
       .rescueWith {
         case MyError.NotFound() => IO.pure("not found")
-        case MyError.Broken()   => IO.pure("not good")
+        case MyError.Broken() => IO.pure("not good")
       }
 
     prog.assertEquals("not found")
@@ -53,12 +54,31 @@ class IOHandleSpec extends CatsEffectSuite {
 
   test(".toEither error case") {
 
-    val prog = ioHandling[MyError] { implicit handle =>
+    val prog: IO[Either[MyError, String]] = ioHandling[MyError] { implicit handle =>
       ioAbort(MyError.NotFound())
         .as("shouldn't have succeeded")
     }.toEither
 
     prog.assertEquals(Left(MyError.NotFound()))
+  }
+
+
+  test(".toEitherT success case") {
+    val prog = ioHandling[MyError] { implicit handle =>
+      val _ = handle
+      IO("success")
+    }.toEitherT
+
+    prog.value.assertEquals(Right("success"))
+  }
+
+  test(".toEitherT error case") {
+    val prog: EitherT[IO, MyError, String] = ioHandling[MyError] { implicit handle =>
+      ioAbort(MyError.NotFound())
+        .as("shouldn't have succeeded")
+    }.toEitherT
+
+    prog.value.assertEquals(Left(MyError.NotFound()))
   }
 
 }

@@ -16,6 +16,8 @@
 
 package iohandletest
 
+//import cats.mtl.Handle.handleForApplicativeError
+import cats.data.EitherT
 import cats.effect.IO
 import cats.syntax.all.*
 import iohandletest.testtypes.*
@@ -55,6 +57,23 @@ class IOHandleSpec extends CatsEffectSuite {
     prog.assertEquals(Left(MyError.NotFound()))
   }
 
+  test(".toEitherT success case") {
+    val prog = ioHandling[MyError]:
+      IO("success")
+    .toEitherT
+
+    prog.value.assertEquals(Right("success"))
+  }
+
+  test(".toEitherT error case") {
+    val prog: EitherT[IO, MyError, String] = ioHandling[MyError]:
+      ioAbort(MyError.NotFound())
+      .as("shouldn't have succeeded")
+    .toEitherT
+
+    prog.value.assertEquals(Left(MyError.NotFound()))
+  }
+
   test("Nesting works") {
     val prog =
       ioHandling[MyError.NotFound]:
@@ -77,6 +96,8 @@ class IOHandleSpec extends CatsEffectSuite {
 
     io.assertEquals(Left("boom!"))
   }
+
+
 
   def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
   def boomStr(using IORaise[String]): IO[Nothing] = ioAbort("boom!")
