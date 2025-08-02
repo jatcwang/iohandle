@@ -21,6 +21,7 @@ import cats.syntax.all.*
 import iohandletest.testtypes.*
 import io.github.jatcwang.iohandle.{ioHandling, ioAbort, IORaise, recoverUnhandled}
 import munit.CatsEffectSuite
+import cats.data.Ior
 
 class IOHandleSpec extends CatsEffectSuite {
 
@@ -53,6 +54,14 @@ class IOHandleSpec extends CatsEffectSuite {
     .toEither
 
     prog.assertEquals(Left(MyError.NotFound()))
+  }
+
+  test(".toIor error case") {
+    val prog = ioHandling[MyError]:
+      ioAbort(MyError.NotFound())
+        .as("shouldn't have succeeded")
+
+    prog.toIor.assertEquals(Ior.Left(MyError.NotFound()))
   }
 
   test("Nesting works") {

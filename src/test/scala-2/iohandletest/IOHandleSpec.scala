@@ -16,6 +16,7 @@
 
 package iohandletest
 
+import cats.data.Ior
 import cats.effect.*
 import iohandletest.testtypes.*
 import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
@@ -61,4 +62,13 @@ class IOHandleSpec extends CatsEffectSuite {
     prog.assertEquals(Left(MyError.NotFound()))
   }
 
+  test(".toIor error case") {
+
+    val prog = ioHandling[MyError] { implicit handle =>
+      ioAbort(MyError.NotFound())
+        .as("shouldn't have succeeded")
+    }
+
+    prog.toIor.assertEquals(Ior.Left(MyError.NotFound()))
+  }
 }
