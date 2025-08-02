@@ -1,6 +1,6 @@
 ThisBuild / tlBaseVersion := "0.1" // your current series x.y
 
-ThisBuild / organization := "io.github.jatcwang"
+ThisBuild / organization := "com.github.jatcwang"
 ThisBuild / organizationName := "IOHandle"
 ThisBuild / startYear := Some(2025)
 ThisBuild / licenses := Seq(License.Apache2)
