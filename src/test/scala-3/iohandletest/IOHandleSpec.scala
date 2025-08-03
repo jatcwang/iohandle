@@ -16,12 +16,12 @@
 
 package iohandletest
 
+import cats.data.{Ior, EitherT}
 import cats.effect.IO
 import cats.syntax.all.*
 import iohandletest.testtypes.*
 import io.github.jatcwang.iohandle.{ioHandling, ioAbort, IORaise, recoverUnhandled}
 import munit.CatsEffectSuite
-import cats.data.Ior
 
 class IOHandleSpec extends CatsEffectSuite {
 
@@ -54,6 +54,23 @@ class IOHandleSpec extends CatsEffectSuite {
     .toEither
 
     prog.assertEquals(Left(MyError.NotFound()))
+  }
+
+  test(".toEitherT success case") {
+    val prog = ioHandling[MyError]:
+      IO("success")
+    .toEitherT
+
+    prog.value.assertEquals(Right("success"))
+  }
+
+  test(".toEitherT error case") {
+    val prog: EitherT[IO, MyError, String] = ioHandling[MyError]:
+      ioAbort(MyError.NotFound())
+        .as("shouldn't have succeeded")
+    .toEitherT
+
+    prog.value.assertEquals(Left(MyError.NotFound()))
   }
 
   test(".toIor error case") {
