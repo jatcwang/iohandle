@@ -68,7 +68,7 @@ class IOHandleSpec extends CatsEffectSuite {
   test(".toEitherT error case") {
     val prog: EitherT[IO, MyError, String] = ioHandling[MyError]:
       ioAbort(MyError.NotFound())
-      .as("shouldn't have succeeded")
+        .as("shouldn't have succeeded")
     .toEitherT
 
     prog.value.assertEquals(Left(MyError.NotFound()))
@@ -96,8 +96,6 @@ class IOHandleSpec extends CatsEffectSuite {
 
     io.assertEquals(Left("boom!"))
   }
-
-
 
   def oops()(using IORaise[MyError]): IO[Int] = ioAbort(MyError.NotFound())
   def boomStr(using IORaise[String]): IO[Nothing] = ioAbort("boom!")
