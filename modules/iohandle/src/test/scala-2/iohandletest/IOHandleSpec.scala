@@ -18,8 +18,8 @@ package iohandletest
 
 import cats.data.{Ior, EitherT}
 import cats.effect.*
-import iohandletest.testtypes.*
 import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
+import iohandletest.testtypes.*
 import munit.CatsEffectSuite
 
 class IOHandleSpec extends CatsEffectSuite {
@@ -53,7 +53,6 @@ class IOHandleSpec extends CatsEffectSuite {
   }
 
   test(".toEither error case") {
-
     val prog: IO[Either[MyError, String]] = ioHandling[MyError] { implicit handle =>
       ioAbort(MyError.NotFound())
         .as("shouldn't have succeeded")

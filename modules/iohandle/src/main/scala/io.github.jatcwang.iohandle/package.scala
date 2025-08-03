@@ -16,8 +16,8 @@
 
 package io.github.jatcwang
 
-import cats.mtl.Raise
 import cats.effect.IO
+import cats.mtl.Raise
 
 package object iohandle extends IOHandlePlatform {
 
