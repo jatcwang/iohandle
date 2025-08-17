@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.jatcwang.iohandle
+package iohandle
 
 import cats.effect.IO
 import scala.compiletime.summonFrom
@@ -40,11 +40,17 @@ trait IOHandlePlatform {
   inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = raise.raise(e)
 
   extension [A](io: IO[A]) {
-    def recoverUnhandled[B >: A](pf: PartialFunction[Throwable, B]): IO[B] = io.recoverWith {
-      case e: Submarine[?] => IO.raiseError(e)
-      case e: Throwable    => io.recover(pf)
-    }
+    inline def recoverUnexpected[B >: A](pf: PartialFunction[Throwable, B]): IO[B] =
+      IOHandleExtensionImpl.recoverUnexpectedWith(io, pf.andThen(IO.pure))
 
+    inline def recoverUnexpectedWith[B >: A](pf: PartialFunction[Throwable, IO[B]]): IO[B] =
+      IOHandleExtensionImpl.recoverUnexpectedWith(io, pf)
+
+    inline def handleUnexpected[B >: A](f: Throwable => B): IO[B] =
+      IOHandleExtensionImpl.handleUnexpectedWith(io, f.andThen(IO.pure))
+
+    inline def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] =
+      IOHandleExtensionImpl.handleUnexpectedWith(io, f)
   }
 
 }

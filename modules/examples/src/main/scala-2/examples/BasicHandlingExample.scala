@@ -17,7 +17,7 @@
 package examples
 
 import cats.effect.{IO, IOApp}
-import io.github.jatcwang.iohandle.{IORaise, ioAbort, ioHandling}
+import iohandle.{IORaise, ioAbort, ioHandling}
 
 /** This example shows the usage of IORaise in function signatures to accurately codify the error that can be raised
   * within the function

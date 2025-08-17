@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package io.github.jatcwang
-
 import cats.effect.IO
 import cats.mtl.Raise
 

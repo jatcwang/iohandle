@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.jatcwang.iohandle
+package iohandle
 
 import cats.Applicative
 import cats.data.EitherT
@@ -39,14 +39,23 @@ trait IOHandle[E] extends Handle[IO, E] { self =>
 class IOHandleImpl[E] private[iohandle] (marker: AnyRef) extends IOHandle[E] { self =>
   override def handleWith[A](fa: IO[A])(f: E => IO[A]): IO[A] =
     fa.handleErrorWith {
-      case Submarine(e, m) if m == marker => f(e.asInstanceOf[E])
-      case e                              => IO.raiseError(e)
+      case s: Submarine[?] if s.marker == marker => f(s.error.asInstanceOf[E])
+      case e                                     => IO.raiseError(e)
     }
 
-  override def raise[E2 <: E, A](e: E2): IO[A] = IO.raiseError(Submarine(e, marker))
+  override def raise[E2 <: E, A](e: E2): IO[A] = IO.raiseError(new Submarine(e, marker))
 }
 
-final private[iohandle] case class Submarine[E](e: E, marker: AnyRef) extends RuntimeException with NoStackTrace
+final private[iohandle] class Submarine[E](val error: E, val marker: AnyRef)
+    extends RuntimeException
+    with NoStackTrace {
+  override def getMessage: String =
+    """You caught iohandle's "Submarine" exception, which is used to carry the underlying error specified by ioHandling.""" +
+      " You should typically rethrow Submarine exception because ioHandling should be the one dealing with it." +
+      " (Tip: import iohandle.* and recoverUnexpected/handleUnexpected will be available as extension methods on cats.effect.IO)." +
+      " If you're seeing this exception outside of the scope set by ioHandling, it's possible that you have leaked an IOHandle/IORaise instance" +
+      " and use it raise an exception outside of the scope it should be used"
+}
 
 private object impl {
   def createIOHandle[E]: IOHandle[E] =

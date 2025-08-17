@@ -16,6 +16,10 @@
 
 package iohandletest
 
+import cats.effect.IO
+import iohandle.IORaise
+import iohandletest.testtypes.ExplodeError.{Bam, Boom}
+
 object testtypes {
   sealed trait MyError
   object MyError {
@@ -23,4 +27,24 @@ object testtypes {
     case class Broken() extends MyError
   }
 
+  sealed trait ExplodeError
+  object ExplodeError {
+    case class Boom() extends ExplodeError
+    case class Bam() extends ExplodeError
+  }
+
+  def successWithoutExplosion(result: Int)(implicit raise: IORaise[ExplodeError]): IO[Int] = {
+    val _ = raise
+    IO(result)
+  }
+
+  def raiseBoom()(implicit raise: IORaise[Boom]): IO[Unit] = raise.raise(Boom())
+  def raiseBam()(implicit raise: IORaise[Bam]): IO[Unit] = raise.raise(Bam())
+
+  class FooException extends Exception("FooException happened")
+  class BarException extends Exception("BarException happened")
+
+  def failWithFoo: IO[Unit] = {
+    IO.raiseError(new FooException)
+  }
 }
