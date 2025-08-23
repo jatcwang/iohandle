@@ -23,9 +23,11 @@ import iohandletest.testtypes.ExplodeError.{Bam, Boom}
 object testtypes {
   sealed trait MyError
   object MyError {
-    case class NotFound() extends MyError
-    case class Broken() extends MyError
+    final case class NotFound() extends MyError
+    final case class Broken() extends MyError
   }
+
+  final case class ErrWithInfo(i: Int)
 
   sealed trait ExplodeError
   object ExplodeError {

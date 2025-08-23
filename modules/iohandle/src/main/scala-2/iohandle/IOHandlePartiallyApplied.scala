@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+package iohandle
+
 import cats.effect.IO
-import cats.mtl.Raise
 
-package object iohandle extends IOHandlePlatform {
-
-  type IORaise[-E] = Raise[IO, E]
-
+private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
+  def apply[A](f: IOHandle[E] => IO[A]): IOHandlePendingRescue[E, A] = new IOHandlePendingRescue(
+    f,
+    handle,
+  )
 }

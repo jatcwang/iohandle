@@ -20,6 +20,7 @@ import cats.effect.IO
 import iohandle.*
 import iohandletest.testtypes.ExplodeError.Boom
 import iohandletest.testtypes.*
+import iohandletest.testtypes.MyError.NotFound
 import munit.CatsEffectSuite
 
 /** Test to test extension methods on cats.effect.IO, e.g. recoverUnexpected Note that this file is copied and made
@@ -141,6 +142,22 @@ class IOExtensionSpec extends CatsEffectSuite {
     }.toEither
 
     prog.assertEquals(Left(Boom()))
+  }
+
+  test("abortIfNone: IO[Option] success case returns the inner value") {
+    val prog = ioHandling[MyError] { implicit handle =>
+      IO.pure(Option(42)).abortIfNone(NotFound())
+    }.toEither
+
+    prog.assertEquals(Right(42))
+  }
+
+  test("abortIfNone: IO[Option] None raises the provided error") {
+    val prog: IO[Either[MyError, Int]] = ioHandling[MyError] { implicit handle =>
+      IO.pure(Option.empty[Int]).abortIfNone(NotFound())
+    }.toEither
+
+    prog.assertEquals(Left(NotFound()))
   }
 
 }
