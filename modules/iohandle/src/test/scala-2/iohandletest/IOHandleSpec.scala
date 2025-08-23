@@ -18,16 +18,22 @@ package iohandletest
 
 import cats.data.{Ior, EitherT}
 import cats.effect.*
-import io.github.jatcwang.iohandle.{ioAbort, ioHandling}
+import iohandle.{ioAbort, ioHandling}
 import iohandletest.testtypes.*
 import munit.CatsEffectSuite
 
+/** Test to test extension methods on cats.effect.IO, e.g. recoverUnexpected Note that this file is copied and made
+  * Scala 3 compatible when building this project in Scala 3 (e.g. string replacement removing "implicit handle =>").
+  * Search for sourceGenerators in build.sbt to see how it's done
+  */
 class IOHandleSpec extends CatsEffectSuite {
 
   test(".rescueWith success case") {
 
     val prog = ioHandling[MyError] { implicit handle =>
+      /* start:scala-2-only */
       val _ = handle
+      /* end:scala-2-only */
       IO("success")
     }
       .rescueWith {
@@ -63,7 +69,9 @@ class IOHandleSpec extends CatsEffectSuite {
 
   test(".toEitherT success case") {
     val prog = ioHandling[MyError] { implicit handle =>
+      /* start:scala-2-only */
       val _ = handle
+      /* end:scala-2-only */
       IO("success")
     }.toEitherT
 

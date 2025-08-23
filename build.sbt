@@ -34,6 +34,41 @@ lazy val iohandle = Project("iohandle", file("modules/iohandle"))
       "org.typelevel" %% "munit-cats-effect" % "2.1.0",
     ).map(_ % Test),
   )
+  .settings(
+    Test / sourceGenerators ++= (if (tlIsScala3.value) {
+                                   Seq(
+                                     lookupAndReplace(
+                                       file("modules/iohandle/src/test/scala-2/iohandletest"),
+                                       List(
+                                         "IOHandleSpec.scala",
+                                         "IOExtensionSpec.scala",
+                                       ),
+                                     ).taskValue,
+                                   )
+                                 } else Seq.empty),
+  )
+
+def lookupAndReplace(baseSrcDir: File, sourceFileNames: List[String]): Def.Initialize[Task[Seq[File]]] = Def.task {
+  val targetDir = (Test / sourceManaged).value
+  sourceFileNames.map { fileName =>
+    val content = IO.read(baseSrcDir / fileName)
+    val targetFile = targetDir / fileName
+    IO.write(targetFile, editSourceCodeForScala3Compilation(content))
+    targetFile
+  }
+}
+
+def editSourceCodeForScala3Compilation(content: String): String = {
+  content
+    .replaceAll("implicit handle =>", "")
+    .replaceAll(
+      "(package iohandletest)",
+      """$1
+        |/* This file is generated from Scala 2.13, with textual replacements
+        |  to make context functions compatible */""".stripMargin,
+    )
+    .replaceAll("""(?s)/\* start:scala-2-only.+?/\* end:scala-2-only \*/""", "")
+}
 
 lazy val examples = Project("examples", file("modules/examples"))
   .dependsOn(iohandle)

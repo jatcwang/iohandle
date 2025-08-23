@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.jatcwang.iohandle
+package iohandle
 
 import cats.effect.IO
 
@@ -35,23 +35,18 @@ trait IOHandlePlatform {
   def ioAbort[E, E1 <: E](e: E1)(implicit raise: IORaise[E]): IO[Nothing] =
     raise.raise(e)
 
-  // TODO:  eliminate allocation
-//  private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
-//    def apply[A](inline f: IOHandle[E] ?=> IO[A]): IOHandlePendingRescue[E, A] = new IOHandlePendingRescue(
-//      convert(f),
-//      handle,
-//    )
-//
-//    private inline def convert[A, B](inline f: A ?=> B): A => B =
-//    implicit a: A => f
-//  }
-//
-//  inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = raise.raise(e)
-//
-//  extension [A](io: IO[A]) {
-//    def recoverUnhandled[B >: A](pf: PartialFunction[Throwable, B]): IO[B] = io.recoverWith {
-//      case e: Submarine[?] => IO.raiseError(e)
-//      case e: Throwable    => io.recover(pf)
-//    }
+  // FIXME: Make AnyVal (need to be in companion object though??)
+  implicit class IOHandleExtensionForCatsEffectIO[A](io: IO[A]) {
+    def recoverUnexpected[B >: A](pf: PartialFunction[Throwable, B]): IO[B] =
+      IOHandleExtensionImpl.recoverUnexpectedWith(io, pf.andThen(IO.pure))
+
+    def recoverUnexpectedWith[B >: A](pf: PartialFunction[Throwable, IO[B]]): IO[B] =
+      IOHandleExtensionImpl.recoverUnexpectedWith(io, pf)
+
+    def handleUnexpected[B >: A](f: Throwable => B): IO[B] =
+      IOHandleExtensionImpl.handleUnexpectedWith(io, f.andThen(IO.pure))
+
+    def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] = IOHandleExtensionImpl.handleUnexpectedWith(io, f)
+  }
 
 }
