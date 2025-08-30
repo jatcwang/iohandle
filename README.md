@@ -22,18 +22,46 @@ to short-circuit the execution. The error will be handled by the hander attached
 
 Scala 3:
 ```
-def checkIn(passport: PassportInfo): IO[Either[CheckInError, Unit]] = {
-  (ioHandling[CheckInError] {
-    for {
-      validPassport <- checkPassport()
-      _ <- if (!validPassport) ioAbort(InvalidPassport()) else IO.unit
-      booking <- getBooking()
-      _ <- if (booking.isEmpty) ioAbort(NoBooking("no booking found for passenger ${passport.name}")) else IO.unit
-    }
-    yield cartContent
-  })
-    .toEither
-}
+import iohandle.*
+
+def transferMoney(source: AccountId, dest: AccountId, currency: Currency, amount: Amount): IO[Either[TransferError, Unit]] =
+  ioHandling[TransferError]:
+    for
+      _ <- checkTransferDestination(dest, currency)
+      _ <- makeTransfer(source, dest, currency, amount)
+    yield ()  
+  .toEither
+  
+def checkTransferDestination(dest: AccountId, currency: Currency)(using IORaise[UnsupportedCurrency | InvalidAccountDetails]): IO[Unit] =
+  for
+    accDetail <- fetchAccountDetails(dest).unwrapOrRaise(InvalidAccountDetails(dest))
+    _ <- ioAbortIf(!accDetail.supportedCurrencies.contains(currency), UnsupportedCurrency(dest, currency))
+```
+
+# Error handling example: Uploading a file
+
+Below is a small end-to-end example showing how to model and handle errors when uploading a file. The two possible domain errors are FileTooLarge and QuotaExceeded.
+
+Scala 3:
+```
+import cats.effect.IO
+import iohandle.*
+
+def uploadFile(userId: UserId, parentPath: Path, file: File): IO[Either[UploadError, String]] =
+  ioHandling[UploadError]:
+    for
+      _ <- if (file.size > MaxPerFileBytes) 
+             ioAbort(FileTooLarge(MaxPerFileBytes, file.size))
+           else IO.unit
+
+      used <- getUsedQuota(userId)
+      remaining = MaxUserQuotaBytes - used
+      // ioAbortIf is a equivalent to `if (..) ioAbort(..) else IO.unit`
+      _ <- ioAbortIf(remaining < file.size, QuotaExceeded(userId, remaining))
+
+      url <- saveToStorage(userId, file)
+    yield url
+  .toEither
 ```
 
 # Inspirations & Comparisons
@@ -43,4 +71,3 @@ def checkIn(passport: PassportInfo): IO[Either[CheckInError, Unit]] = {
       instance is leaked outside its original scope
 - ValdemarGr's [catch-effect](https://github.com/ValdemarGr/catch-effect) library
     - Difference: We rely on `IO.raiseError` instead of IO cancellation
-
