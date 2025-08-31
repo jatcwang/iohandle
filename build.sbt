@@ -10,11 +10,10 @@ ThisBuild / developers ++= List(
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"))
 
 val Scala2 = "2.13.16"
-//val Scala3 = "3.3.6"
-val Scala3 = "3.6.4"
+val Scala3 = "3.3.6"
 ThisBuild / crossScalaVersions := Seq(Scala2, Scala3)
-ThisBuild / scalaVersion := Scala2 // the default Scala
-//ThisBuild / scalaVersion := Scala3 // the default Scala
+ThisBuild / scalaVersion := Scala2
+//ThisBuild / scalaVersion := Scala3
 
 lazy val iohandleRoot = Project("root", file("."))
   .aggregate(iohandle, examples)
@@ -72,6 +71,9 @@ def editSourceCodeForScala3Compilation(content: String): String = {
 
 lazy val examples = Project("examples", file("modules/examples"))
   .dependsOn(iohandle)
+  .settings(
+    Compile / fork := true,
+  )
   .settings(publish / skip := true)
 
 lazy val commonSettings = Seq(

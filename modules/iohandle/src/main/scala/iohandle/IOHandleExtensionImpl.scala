@@ -20,12 +20,12 @@ import cats.effect.IO
 
 private[iohandle] object IOHandleExtensionImpl {
   def recoverUnexpectedWith[A, B >: A](io: IO[A], pf: PartialFunction[Throwable, IO[B]]): IO[B] = io.handleErrorWith {
-    case e: Submarine[?] => IO.raiseError(e)
-    case e: Throwable    => pf.applyOrElse(e, IO.raiseError)
+    case e: IOHandleErrorWrapper[?] => IO.raiseError(e)
+    case e: Throwable               => pf.applyOrElse(e, IO.raiseError)
   }
 
   def handleUnexpectedWith[A, B >: A](io: IO[A], f: Throwable => IO[B]): IO[B] = io.handleErrorWith {
-    case e: Submarine[?] => IO.raiseError(e)
-    case e: Throwable    => f(e)
+    case e: IOHandleErrorWrapper[?] => IO.raiseError(e)
+    case e: Throwable               => f(e)
   }
 }

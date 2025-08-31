@@ -36,22 +36,20 @@ trait IOHandle[E] extends Handle[IO, E] { self =>
   }
 }
 
-class IOHandleImpl[E] private[iohandle] (marker: AnyRef) extends IOHandle[E] { self =>
+private[iohandle] class IOHandleImpl[E] private[iohandle] (marker: AnyRef) extends IOHandle[E] { self =>
   override def handleWith[A](fa: IO[A])(f: E => IO[A]): IO[A] =
     fa.handleErrorWith {
-      case s: Submarine[?] if s.marker == marker => f(s.error.asInstanceOf[E])
-      case e                                     => IO.raiseError(e)
+      case s: IOHandleErrorWrapper[?] if s.marker == marker => f(s.error.asInstanceOf[E])
+      case e                                                => IO.raiseError(e)
     }
 
-  override def raise[E2 <: E, A](e: E2): IO[A] = IO.raiseError(new Submarine(e, marker))
+  override def raise[E2 <: E, A](e: E2): IO[A] = IO.raiseError(new IOHandleErrorWrapper(e, marker))
 }
 
-final private[iohandle] class Submarine[E](val error: E, val marker: AnyRef)
-    extends RuntimeException
-    with NoStackTrace {
+final class IOHandleErrorWrapper[E](val error: E, val marker: AnyRef) extends RuntimeException with NoStackTrace {
   override def getMessage: String =
-    """You caught iohandle's "Submarine" exception, which is used to carry the underlying error specified by ioHandling.""" +
-      " You should typically rethrow Submarine exception because ioHandling should be the one dealing with it." +
+    """You caught iohandle's "IOHandleErrorWrapper" exception, which is used to carry the underlying error specified by ioHandling.""" +
+      " You should typically rethrow IOHandleErrorWrapper exception because ioHandling should be the one dealing with it." +
       " (Tip: import iohandle.* and recoverUnexpected/handleUnexpected will be available as extension methods on cats.effect.IO)." +
       " If you're seeing this exception outside of the scope set by ioHandling, it's possible that you have leaked an IOHandle/IORaise instance" +
       " and use it raise an exception outside of the scope it should be used"
@@ -68,9 +66,11 @@ private[iohandle] class IOHandlePendingRescue[E, A](
   private val ioHandle: IOHandle[E],
 ) {
 
-  def rescueWith(handler: E => IO[A]): IO[A] = {
+  def rescueWith(handler: E => IO[A]): IO[A] =
     ioHandle.handleWith(body(ioHandle))(handler)
-  }
+
+  def rescue(handler: E => A): IO[A] =
+    ioHandle.handleWith(body(ioHandle))(handler.andThen(IO.pure))
 
   def toEither: IO[Either[E, A]] = {
     ioHandle.handleWith[Either[E, A]](body(ioHandle).map(Right(_)))(e => IO.pure(Left(e)))
