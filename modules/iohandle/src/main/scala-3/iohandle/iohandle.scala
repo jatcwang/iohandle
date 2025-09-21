@@ -22,72 +22,138 @@ import scala.compiletime.summonFrom
 
 type IORaise[-E] = Raise[IO, E]
 
+/** Creates an error-handling scope for the error type E. Within the scope, (typed) errors can be raised using
+  * [[ioAbort]] and other similar methods
+  *
+  * {{{
+  * val prog: IO[String] = ioHandling:
+  *     for
+  *       isSuccess <- checkSomething
+  *       _ <- if isSuccess then ioAbort(SomeError("oops")) else IO.unit
+  *     yield "succeeded"
+  *   .rescue:
+  *     e => e.message
+  * }}}
+  * @tparam E
+  * @return
+  */
 inline def ioHandling[E]: IOHandlePartiallyApplied[E] = {
   val handle = impl.createIOHandle[E]
   new IOHandlePartiallyApplied[E](handle)
 }
 
+/** Abort the execution with the provided error, akin to IO.raiseError. Requires an implicit IORaise[E] instance, which
+  * you can obtain via calling [[ioHandling]]
+  */
 inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = raise.raise(e)
 
-inline def ioAbortIf[E](cond: Boolean, e: => E)(using raise: IORaise[E]): IO[Unit] =
+/** Abort the execution with the provided error if condition evaluates to true
+  */
+def ioAbortIf[E](cond: Boolean, e: => E)(using raise: IORaise[E]): IO[Unit] =
   if cond then raise.raise(e) else IO.unit
 
-inline def ioAbortIfNone[E, A](opt: Option[A], e: => E)(using raise: IORaise[E]): IO[A] =
+/** If the provided option value is None, Abort the execution with the provided error
+  */
+def ioAbortIfNone[E, A](opt: Option[A], e: => E)(using raise: IORaise[E]): IO[A] =
   opt match
     case Some(a) => IO.pure(a)
     case None    => raise.raise(e)
 
-inline def ioAbortIfSome[E](opt: Option[E])(using raise: IORaise[E]): IO[Unit] =
+/** If the provided option value is Some(e), Abort the execution with it
+  */
+def ioAbortIfSome[E](opt: Option[E])(using raise: IORaise[E]): IO[Unit] =
   opt match
     case Some(err) => raise.raise(err)
     case None      => IO.unit
 
-inline def ioAbortIfLeft[L, R](either: Either[L, R])(using raise: IORaise[L]): IO[R] =
+/** Abort the execution if the provided Either value is a Left(e)
+  */
+def ioAbortIfLeft[L, R](either: Either[L, R])(using raise: IORaise[L]): IO[R] =
   either match
     case Left(e)  => raise.raise(e)
     case Right(a) => IO.pure(a)
 
-inline def ioAbortIfRight[L, R](either: Either[L, R])(using raise: IORaise[R]): IO[L] =
+/** Abort the execution if the provided Either value is a Right(e)
+  */
+def ioAbortIfRight[L, R](either: Either[L, R])(using raise: IORaise[R]): IO[L] =
   either match
     case Left(a)  => IO.pure(a)
     case Right(e) => raise.raise(e)
 
 extension [A](io: IO[A]) {
-  inline def recoverUnexpected[B >: A](pf: PartialFunction[Throwable, B]): IO[B] =
+
+  /** Like [[cats.effect.IO.recover]], but user do not need to handle [[IOHandleErrorWrapper]] (it is automatically
+    * re-raised without exposing it to the user)
+    */
+  def recoverUnexpected[B >: A](pf: PartialFunction[Throwable, B]): IO[B] =
     IOHandleExtensionImpl.recoverUnexpectedWith(io, pf.andThen(IO.pure))
 
-  inline def recoverUnexpectedWith[B >: A](pf: PartialFunction[Throwable, IO[B]]): IO[B] =
+  /** Like [[cats.effect.IO.recoverWith]], but user do not need to handle [[IOHandleErrorWrapper]] (it is automatically
+    * re-raised without exposing it to the user)
+    */
+  def recoverUnexpectedWith[B >: A](pf: PartialFunction[Throwable, IO[B]]): IO[B] =
     IOHandleExtensionImpl.recoverUnexpectedWith(io, pf)
 
-  inline def handleUnexpected[B >: A](f: Throwable => B): IO[B] =
+  /** Like [[cats.effect.IO.handleError]], but user do not need to handle [[IOHandleErrorWrapper]] (it is automatically
+    * re-raised without exposing it to the user)
+    */
+  def handleUnexpected[B >: A](f: Throwable => B): IO[B] =
     IOHandleExtensionImpl.handleUnexpectedWith(io, f.andThen(IO.pure))
 
-  inline def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] =
+  /** Like [[cats.effect.IO.handleErrorWith]], but user do not need to deal with the error potentially being
+    * [[IOHandleErrorWrapper]] (it is automatically re-raised without exposing it to the user)
+    */
+  def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] =
     IOHandleExtensionImpl.handleUnexpectedWith(io, f)
 }
 
+/** Extension methods for `IO[Option[A]]` */
 extension [A](ioOpt: IO[Option[A]]) {
-  inline def abortIfNone[E](e: => E)(using raise: IORaise[E]): IO[A] =
+
+  /** Abort the execution with the provided error if the IO result this is called on is a None.
+    *
+    * {{{
+    *   for
+    *     user <- getUser(userId).abortIfNone(UserNotFound(userId))
+    *   yield user
+    * }}}
+    */
+  def abortIfNone[E](e: => E)(using raise: IORaise[E]): IO[A] =
     ioOpt.flatMap {
       case Some(a) => IO.pure(a)
       case None    => raise.raise(e)
     }
 
-  inline def abortIfSome(using raise: IORaise[A]): IO[Unit] =
+  /** Abort the execution with result of the IO results in a Some(e)
+    *
+    * {{{
+    *   for
+    *     _ <- getUser(userName).map(opt => opt.map(_ => UserNameAlreadyUsed(userName))).abortIfSome
+    *     user <- createUser(userName, email)
+    *   yield user
+    * }}}
+    */
+  def abortIfSome(using raise: IORaise[A]): IO[Unit] =
     ioOpt.flatMap {
       case Some(err) => raise.raise(err)
       case None      => IO.unit
     }
 }
 
+/** Extension methods available on a `IO[Option[A]]` value, for convenience */
 extension [L, R](ioEither: IO[Either[L, R]]) {
-  inline def abortIfLeft(using raise: IORaise[L]): IO[R] =
+
+  /** Abort the execution if the IO results in a Left(e)
+    */
+  def abortIfLeft(using raise: IORaise[L]): IO[R] =
     ioEither.flatMap {
       case Left(e)  => raise.raise(e)
       case Right(a) => IO.pure(a)
     }
 
-  inline def abortIfRight(using raise: IORaise[R]): IO[L] =
+  /** Abort the execution if the IO results in a Right(e)
+    */
+  def abortIfRight(using raise: IORaise[R]): IO[L] =
     ioEither.flatMap {
       case Left(a)  => IO.pure(a)
       case Right(e) => raise.raise(e)

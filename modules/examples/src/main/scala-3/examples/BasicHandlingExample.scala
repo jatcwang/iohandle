@@ -25,32 +25,27 @@ import iohandle.{IORaise, ioAbort, ioHandling}
 object BasicHandlingExample extends IOApp.Simple {
 
   val run: IO[Unit] =
-    for {
+    for
       _ <- checkNumber(7)
       _ <- checkNumber(12)
       _ <- checkNumber(14)
-    } yield ()
+    yield ()
 
-  def checkNumber(num: Int): IO[Unit] = {
-    ioHandling[NumberCheckError] { implicit handle =>
-      for {
+  def checkNumber(num: Int): IO[Unit] =
+    ioHandling[NumberCheckError]:
+      for
         _ <- checkEven(num)
         _ <- checkDivisbleBy7(num)
         _ <- IO.println(s"$num is even and divisible by 7!")
-      } yield ()
-    }
-      .rescueWith { e =>
-        IO.println(e.getMessage)
-      }
-  }
+      yield ()
+    .rescueWith: e =>
+      IO.println(e.getMessage)
 
-  def checkEven(num: Int)(implicit raise: IORaise[NotEven]): IO[Unit] = {
+  def checkEven(num: Int)(implicit raise: IORaise[NotEven]): IO[Unit] =
     if (num % 2 != 0) ioAbort(NotEven(num)) else IO.unit
-  }
 
-  def checkDivisbleBy7(num: Int)(implicit raise: IORaise[NotDivisbleBy7]): IO[Unit] = {
+  def checkDivisbleBy7(num: Int)(implicit raise: IORaise[NotDivisbleBy7]): IO[Unit] =
     if (num % 7 != 0) ioAbort(NotDivisbleBy7(num)) else IO.unit
-  }
 
   sealed trait NumberCheckError extends RuntimeException
   case class NotEven(num: Int) extends NumberCheckError {
