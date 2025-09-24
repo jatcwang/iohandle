@@ -18,6 +18,7 @@ package examples
 
 import cats.effect.{IO, IOApp}
 import iohandle.{IORaise, ioAbort, ioHandling}
+import iohandle.IOExtensionForIOHandle
 
 /** This example shows the usage of IORaise in function signatures to accurately codify the error that can be raised
   * within the function
@@ -33,14 +34,19 @@ object BasicHandlingExample extends IOApp.Simple {
 
   def checkNumber(num: Int): IO[Unit] = {
     ioHandling[NumberCheckError] { implicit handle =>
-      for {
-        _ <- checkEven(num)
-        _ <- checkDivisbleBy7(num)
-        _ <- IO.println(s"$num is even and divisible by 7!")
-      } yield ()
+      {  
+        for {
+          _ <- checkEven(num)
+          _ <- checkDivisbleBy7(num)
+          _ <- IO.println(s"$num is even and divisible by 7!")
+        } yield ()
+      }
+      .tapError { e: NumberCheckError => 
+        IO.println(s"There is a number check error: ${e.getMessage()}")
+      }
     }
-      .rescueWith { e =>
-        IO.println(e.getMessage)
+      .rescueWith { _ =>
+        IO.unit // just ignore the error
       }
   }
 
