@@ -33,13 +33,13 @@ object BasicHandlingExample extends IOApp.Simple {
 
   def checkNumber(num: Int): IO[Unit] =
     ioHandling[NumberCheckError]:
-      {
-        for
+      (
+        for {
           _ <- checkEven(num)
           _ <- checkDivisbleBy7(num)
           _ <- IO.println(s"$num is even and divisible by 7!")
-        yield ()
-      }.tapError { e: NumberCheckError =>
+        } yield ()
+      ).tapError[NumberCheckError] { e =>
         IO.println(s"There is a number check error: ${e.getMessage()}")
       }
     .rescueWith: e =>
