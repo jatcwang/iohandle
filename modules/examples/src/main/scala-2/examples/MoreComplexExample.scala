@@ -9,9 +9,10 @@ object MoreComplexErrorHandlingExample extends IOApp.Simple {
   private final case class UserDetails(userName: String, age: Int)
 
   val run: IO[Unit] = {
-    val maybeUser: Option[UserDetails] = Some(UserDetails("Fox", 15))
     for {
-      _ <- checkValue(maybeUser)
+      _ <- checkValue(Some(UserDetails("Fox", 1)))
+      _ <- checkValue(Some(UserDetails("", 15)))
+      _ <- checkValue(None)
     } yield ()
   }
 
@@ -47,6 +48,8 @@ object MoreComplexErrorHandlingExample extends IOApp.Simple {
     override def getMessage: String = s"Min user age is: $minAge"
   }
 
-  case class UserNameIsEmpty(error: String) extends UserValidationError
+  case class UserNameIsEmpty(error: String) extends UserValidationError{
+    override def getMessage: String = error
+  }
 
 }
