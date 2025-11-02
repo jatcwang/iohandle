@@ -109,8 +109,9 @@ def doStuff(input: Int)(using IORaise[MyError]): IO[Int] = ...
 
 val uniqueMarker = new Object // java.lang.Object are compared by reference
 
-given IORaise[MyError] = new IORaise[MyError] {
-  def raise(e: MyError): IO[Nothing]
+given IOHandle[MyError] = new IOHandle[MyError] {
+  def raise(e: MyError): IO[Nothing] = IO.raiseError(IOHandleErrorWrapper(e, uniqueMarker))
+  def handleWith[A](fa: IO[A])(f: E => IO[A]): IO[A] = ...
 }
 
 doStuff(42)
