@@ -110,6 +110,9 @@ package object iohandle {
       * [[iohandle.IOHandleErrorWrapper]] (it is automatically re-raised without exposing it to the user)
       */
     def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] = IOHandleExtensionImpl.handleUnexpectedWith(io, f)
+
+    def tapError[E](f: E => IO[A])(implicit handler: IOHandle[E]): IO[A] =
+      handler.handleWith(io){ e => f(e) *> handler.raise(e) }
   }
 
   /** Extension methods available on a IO[Option[A]] value, for convenience */

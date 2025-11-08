@@ -23,3 +23,6 @@ RUNNING_PID
 .metals
 .bsp
 .junie
+.bloop
+.vscode
+**metals.sbt
