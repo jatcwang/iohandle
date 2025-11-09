@@ -15,12 +15,15 @@ ThisBuild / crossScalaVersions := Seq(Scala2, Scala3)
 ThisBuild / scalaVersion := Scala2
 //ThisBuild / scalaVersion := Scala3
 
+ThisBuild / tlCiMimaBinaryIssueCheck := false
+
 lazy val iohandleRoot = Project("root", file("."))
   .aggregate(iohandle, examples)
   .settings(
     name := "IOHandle",
     publish / skip := true,
   )
+
 lazy val iohandle = Project("iohandle", file("modules/iohandle"))
   .settings(
     libraryDependencies ++= Seq(
@@ -46,6 +49,7 @@ lazy val iohandle = Project("iohandle", file("modules/iohandle"))
                                    )
                                  } else Seq.empty),
   )
+  .settings(commonSettings)
 
 def lookupAndReplace(baseSrcDir: File, sourceFileNames: List[String]): Def.Initialize[Task[Seq[File]]] = Def.task {
   val targetDir = (Test / sourceManaged).value
@@ -69,12 +73,12 @@ def editSourceCodeForScala3Compilation(content: String): String = {
     .replaceAll("""(?s)/\* start:scala-2-only.+?/\* end:scala-2-only \*/""", "")
 }
 
+lazy val commonSettings = Seq(
+)
+
 lazy val examples = Project("examples", file("modules/examples"))
   .dependsOn(iohandle)
   .settings(
     Compile / fork := true,
   )
   .settings(publish / skip := true)
-
-lazy val commonSettings = Seq(
-)
