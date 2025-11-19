@@ -17,10 +17,6 @@
 package iohandle
 
 import cats.effect.IO
-import cats.mtl.Raise
-import scala.compiletime.summonFrom
-
-type IORaise[-E] = Raise[IO, E]
 
 /** Creates an error-handling scope for the error type E. Within the scope, (typed) errors can be raised using
   * [[ioAbort]] and other similar methods
@@ -106,8 +102,11 @@ extension [A](io: IO[A]) {
   def handleUnexpectedWith[B >: A](f: Throwable => IO[B]): IO[B] =
     IOHandleExtensionImpl.handleUnexpectedWith(io, f)
 
-  def tapError[E](f: E => IO[A])(implicit handler: IOHandle[E]): IO[A] =
-    handler.handleWith(io){ e => f(e) *> handler.raise(e) }
+  /** Intercept any raised effect and perform some actions. The error is then re-raised. Nothing happens if no error was
+    * raised
+    */
+  def tapError[E](f: E => IO[Any])(implicit handler: IOHandle[E]): IO[A] =
+    handler.handleWith(io) { e => f(e) *> handler.raise(e) }
 }
 
 /** Extension methods for `IO[Option[A]]` */

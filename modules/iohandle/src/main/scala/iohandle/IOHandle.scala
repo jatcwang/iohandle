@@ -19,12 +19,22 @@ package iohandle
 import cats.Applicative
 import cats.data.EitherT
 import cats.effect.IO
-import cats.mtl.Handle
+import cats.mtl.{Handle, Raise}
 
 import scala.util.control.NoStackTrace
 import cats.data.Ior
 
-trait IOHandle[E] extends Handle[IO, E] { self =>
+import scala.annotation.implicitNotFound
+
+@implicitNotFound(
+  "Could not find implicit instance of IORaise[${E}].\n"
+    + "Are you within an error handling scope capable of handling this error type? (or its parent type)\n"
+    + "You will either need `ioHandling[${E}]` to open an error handling scope"
+    + "or the method you're in should be modified to require an implicit / given parameter of type IORaise[${E}] ",
+)
+trait IORaise[-E] extends Raise[IO, E]
+
+trait IOHandle[E] extends Handle[IO, E] with IORaise[E] { self =>
   override def applicative: Applicative[IO] = IO.asyncForIO
 
   final def imap[E3](f: E => E3)(g: E3 => E): Handle[IO, E3] = new IOHandle[E3] {

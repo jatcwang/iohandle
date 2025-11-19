@@ -18,7 +18,6 @@ package examples
 
 import cats.effect.{IO, IOApp}
 import iohandle.{IORaise, ioAbort, ioHandling}
-import iohandle.IOExtensionForIOHandle
 
 /** This example shows the usage of IORaise in function signatures to accurately codify the error that can be raised
   * within the function
@@ -27,26 +26,26 @@ object BasicHandlingExample extends IOApp.Simple {
 
   val run: IO[Unit] =
     for {
-      _ <- checkNumber(7)
-      _ <- checkNumber(12)
-      _ <- checkNumber(14)
+      res1 <- checkNumber(7)
+      _ <- IO.println(res1)
+
+      res2 <- checkNumber(12)
+      _ <- IO.println(res2)
+
+      res3 <- checkNumber(14)
+      _ <- IO.println(res3)
     } yield ()
 
-  def checkNumber(num: Int): IO[Unit] = {
+  def checkNumber(num: Int): IO[String] = {
     ioHandling[NumberCheckError] { implicit handle =>
-      {  
-        for {
-          _ <- checkEven(num)
-          _ <- checkDivisbleBy7(num)
-          _ <- IO.println(s"$num is even and divisible by 7!")
-        } yield ()
-      }
-      .tapError { e: NumberCheckError => 
-        IO.println(s"There is a number check error: ${e.getMessage()}")
-      }
+      for {
+        _ <- IO.println(s"Checking number $num")
+        _ <- checkEven(num)
+        _ <- checkDivisbleBy7(num)
+      } yield s"Good result: $num is even and divisible by 7!"
     }
-      .rescueWith { _ =>
-        IO.unit // just ignore the error
+      .rescue { e =>
+        s"Bad result: ${e.getMessage}"
       }
   }
 
