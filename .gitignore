@@ -26,3 +26,4 @@ RUNNING_PID
 .bloop
 .vscode
 **metals.sbt
+.aider*

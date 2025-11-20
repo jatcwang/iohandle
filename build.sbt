@@ -12,8 +12,8 @@ ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"))
 val Scala2 = "2.13.16"
 val Scala3 = "3.3.6"
 ThisBuild / crossScalaVersions := Seq(Scala2, Scala3)
-ThisBuild / scalaVersion := Scala2
-//ThisBuild / scalaVersion := Scala3
+//ThisBuild / scalaVersion := Scala2
+ThisBuild / scalaVersion := Scala3
 
 ThisBuild / tlCiMimaBinaryIssueCheck := false
 
@@ -39,29 +39,48 @@ lazy val iohandle = Project("iohandle", file("modules/iohandle"))
   .settings(
     Test / sourceGenerators ++= (if (tlIsScala3.value) {
                                    Seq(
-                                     lookupAndReplace(
+                                     codeLookupAndReplace(
                                        file("modules/iohandle/src/test/scala-2/iohandletest"),
                                        List(
                                          "IOHandleSpec.scala",
                                          "IOExtensionSpec.scala",
                                        ),
+                                       (Test / sourceManaged),
+                                       editTestSourceCodeForScala3Compilation,
                                      ).taskValue,
                                    )
                                  } else Seq.empty),
+    Compile / sourceGenerators ++= (if (tlIsScala3.value) {
+                                      Seq(
+                                        codeLookupAndReplace(
+                                          file("modules/iohandle/src/main/scala-2/iohandle"),
+                                          List(
+                                            "ioscreen.scala",
+                                          ),
+                                          (Compile / sourceManaged),
+                                          editLibSourceCodeForScala3Compilation,
+                                        ).taskValue,
+                                      )
+                                    } else Seq.empty),
   )
   .settings(commonSettings)
 
-def lookupAndReplace(baseSrcDir: File, sourceFileNames: List[String]): Def.Initialize[Task[Seq[File]]] = Def.task {
-  val targetDir = (Test / sourceManaged).value
+def codeLookupAndReplace(
+  baseSrcDir: File,
+  sourceFileNames: List[String],
+  targetDir: Def.Initialize[File],
+  editFunc: String => String,
+): Def.Initialize[Task[Seq[File]]] = Def.task {
+  val dir = targetDir.value
   sourceFileNames.map { fileName =>
     val content = IO.read(baseSrcDir / fileName)
-    val targetFile = targetDir / fileName
-    IO.write(targetFile, editSourceCodeForScala3Compilation(content))
+    val targetFile = dir / fileName
+    IO.write(targetFile, editFunc(content))
     targetFile
   }
 }
 
-def editSourceCodeForScala3Compilation(content: String): String = {
+def editTestSourceCodeForScala3Compilation(content: String): String = {
   content
     .replaceAll("implicit handle =>", "")
     .replaceAll(
@@ -71,6 +90,14 @@ def editSourceCodeForScala3Compilation(content: String): String = {
         |  to make context functions compatible */""".stripMargin,
     )
     .replaceAll("""(?s)/\* start:scala-2-only.+?/\* end:scala-2-only \*/""", "")
+}
+
+def editLibSourceCodeForScala3Compilation(content: String): String = {
+  content
+    .replaceAll("""(?s)/\* start:scala-2-only.+?/\* end:scala-2-only \*/""", "")
+    // Convert Scala 2 implicit class extension methods to Scala 3 extension methods syntax
+    // This isn't perfect e.g. doesn't handle nested [] in type parameter blocks
+    .replaceAll("""implicit class [^\[]+\[([^\(]+)\]\(val ([^\)]+)\) extends AnyVal""", "extension [$1]($2)")
 }
 
 lazy val commonSettings = Seq(

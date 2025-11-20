@@ -15,6 +15,7 @@
  */
 
 import cats.effect.IO
+import iohandle.IOScreen.IOScreenPartiallyApplied
 
 package object iohandle {
 
@@ -172,6 +173,14 @@ package object iohandle {
         case Left(a)  => IO.pure(a)
         case Right(e) => raise.raise(e)
       }
+  }
+
+  // ================
+  // IOScreen / IOReport
+  // ================
+
+  def ioScreening[E]: IOScreenPartiallyApplied[E] = {
+    new IOScreenPartiallyApplied[E]
   }
 
 }
