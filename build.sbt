@@ -12,8 +12,8 @@ ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"))
 val Scala2 = "2.13.16"
 val Scala3 = "3.3.6"
 ThisBuild / crossScalaVersions := Seq(Scala2, Scala3)
-ThisBuild / scalaVersion := Scala2
-//ThisBuild / scalaVersion := Scala3
+//ThisBuild / scalaVersion := Scala2
+ThisBuild / scalaVersion := Scala3
 
 ThisBuild / tlCiMimaBinaryIssueCheck := false
 

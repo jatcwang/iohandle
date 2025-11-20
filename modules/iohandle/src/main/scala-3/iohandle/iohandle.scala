@@ -16,7 +16,10 @@
 
 package iohandle
 
+import iohandle.utils3.convert
+
 import cats.effect.IO
+import iohandle.IOHandleAccum.IOHandleAccumPartiallyApplied
 
 /** Creates an error-handling scope for the error type E. Within the scope, (typed) errors can be raised using
   * [[ioAbort]] and other similar methods
@@ -36,6 +39,10 @@ import cats.effect.IO
 inline def ioHandling[E]: IOHandlePartiallyApplied[E] = {
   val handle = impl.createIOHandle[E]
   new IOHandlePartiallyApplied[E](handle)
+}
+
+inline def ioHandlingAccum[E]: IOHandleAccumPartiallyApplied[E] = {
+  new IOHandleAccumPartiallyApplied[E]
 }
 
 /** Abort the execution with the provided error, akin to IO.raiseError. Requires an implicit IORaise[E] instance, which
@@ -168,6 +175,4 @@ private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
     handle,
   )
 
-  private inline def convert[A, B](inline f: A ?=> B): A => B =
-    implicit a: A => f
 }
