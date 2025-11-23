@@ -226,4 +226,26 @@ class IOHandleSpec extends CatsEffectSuite {
     prog.assertEquals(Left(NotFound()))
   }
 
+  test("ioAbortCheck: succeeds if condition is false") {
+    val prog = ioHandling[MyError] { implicit handle =>
+      ioAbortCheck(true, Broken())
+    }.toEither
+
+    prog.assertEquals(Right(()))
+  }
+
+  test("ioAbortCheck: doesn't run the effect if check is false") {
+    val prog = for {
+      ref <- Ref.of[IO, Int](0)
+      result <- ioHandling[MyError] { implicit handle =>
+        for {
+          _ <- ioAbortCheck(false, Broken())
+          _ <- ref.set(1)
+        } yield ()
+      }.toEither
+      v <- ref.get
+    } yield (result, v)
+
+    prog.assertEquals((Left(Broken()), 0))
+  }
 }
