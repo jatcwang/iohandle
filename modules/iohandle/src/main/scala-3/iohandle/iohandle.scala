@@ -48,6 +48,12 @@ inline def ioAbort[E, E1 <: E](e: E1)(using raise: IORaise[E]): IO[Nothing] = ra
 def ioAbortIf[E](cond: Boolean, e: => E)(using raise: IORaise[E]): IO[Unit] =
   if cond then raise.raise(e) else IO.unit
 
+/** Checks the condition and continues if condition is TRUE. If condition is false, abort with the provided error. This
+  * function is similar to Either.cond / EitherT.cond, and opposite of ioAbortIf.
+  */
+def ioAbortCheck[E](cond: Boolean, e: => E)(using raise: IORaise[E]): IO[Unit] =
+  if !cond then raise.raise(e) else IO.unit
+
 /** If the provided option value is None, Abort the execution with the provided error
   */
 def ioAbortIfNone[E, A](opt: Option[A], e: => E)(using raise: IORaise[E]): IO[A] =

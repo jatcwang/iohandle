@@ -43,13 +43,19 @@ package object iohandle {
   /** Abort the execution with the provided error, akin to IO.raiseError. Requires an implicit IORaise[E] instance,
     * which you can obtain via calling [[ioHandling]]
     */
-  def ioAbort[E, E1 <: E](e: E1)(implicit raise: IORaise[E]): IO[Nothing] =
+  def ioAbort[E](e: E)(implicit raise: IORaise[E]): IO[Nothing] =
     raise.raise(e)
 
-  /** Abort the execution with the provided error if condition evaluates to true
+  /** Abort the execution with the provided error if condition evaluates to TRUE
     */
   def ioAbortIf[E](cond: Boolean, e: => E)(implicit raise: IORaise[E]): IO[Unit] =
     if (cond) raise.raise(e) else IO.unit
+
+  /** Checks the condition and continues if condition is TRUE. If condition is false, abort with the provided error.
+    * This function is similar to Either.cond / EitherT.cond, and opposite of ioAbortIf.
+    */
+  def ioAbortCheck[E](cond: Boolean, e: => E)(implicit raise: IORaise[E]): IO[Unit] =
+    if (!cond) raise.raise(e) else IO.unit
 
   /** If the provided option value is None, Abort the execution with the provided error
     */
