@@ -116,6 +116,13 @@ extension [A](io: IO[A]) {
     */
   def tapError[E](f: E => IO[Any])(implicit handler: IOHandle[E]): IO[A] =
     handler.handleWith(io) { e => f(e) *> handler.raise(e) }
+
+  /** Abort if the value inside IO satisfies the predicate
+    */
+  def abortIf[E](p: A => Boolean, e: => E)(using raise: IORaise[E]): IO[A] =
+    io.flatMap { a =>
+      if p(a) then raise.raise(e) else IO.pure(a)
+    }
 }
 
 /** Extension methods for `IO[Option[A]]` */
