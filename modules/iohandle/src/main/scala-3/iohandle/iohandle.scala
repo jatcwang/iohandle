@@ -16,7 +16,10 @@
 
 package iohandle
 
+import iohandle.utils3.implicitFuncToFunc
+
 import cats.effect.IO
+import iohandle.IOScreen.IOScreenPartiallyApplied
 
 /** Creates an error-handling scope for the error type E. Within the scope, (typed) errors can be raised using
   * [[ioAbort]] and other similar methods
@@ -170,10 +173,16 @@ extension [L, R](ioEither: IO[Either[L, R]]) {
 
 private[iohandle] class IOHandlePartiallyApplied[E](val handle: IOHandle[E]) {
   inline def apply[A](inline f: IOHandle[E] ?=> IO[A]): IOHandlePendingRescue[E, A] = new IOHandlePendingRescue(
-    convert(f),
+    implicitFuncToFunc(f),
     handle,
   )
 
-  private inline def convert[A, B](inline f: A ?=> B): A => B =
-    implicit a: A => f
+}
+
+// ================
+// IOScreen / IOReport
+// ================
+
+inline def ioScreening[E]: IOScreenPartiallyApplied[E] = {
+  new IOScreenPartiallyApplied[E]
 }
