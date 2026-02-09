@@ -120,6 +120,13 @@ package object iohandle {
       */
     def tapError[E](f: E => IO[Any])(implicit handler: IOHandle[E]): IO[A] =
       handler.handleWith(io) { e => f(e) *> handler.raise(e) }
+
+    /** If the IO execution result is true, abort with the provided error
+      */
+    def abortIf[E](p: A => Boolean, e: => E)(implicit raise: IORaise[E]): IO[A] =
+      io.flatMap { a =>
+        if (p(a)) raise.raise(e) else IO.pure(a)
+      }
   }
 
   /** Extension methods available on a IO[Option[A]] value, for convenience */

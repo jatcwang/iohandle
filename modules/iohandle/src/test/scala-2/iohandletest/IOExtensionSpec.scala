@@ -160,4 +160,20 @@ class IOExtensionSpec extends CatsEffectSuite {
     prog.assertEquals(Left(NotFound()))
   }
 
+  test("abortIf: IO[A] success case returns the value if predicate is false") {
+    val prog = ioHandling[MyError] { implicit handle =>
+      IO.pure(42).abortIf(_ => false, NotFound())
+    }.toEither
+
+    prog.assertEquals(Right(42))
+  }
+
+  test("abortIf: IO[A] raises error if predicate is true") {
+    val prog = ioHandling[MyError] { implicit handle =>
+      IO.pure(42).abortIf(_ == 42, NotFound())
+    }.toEither
+
+    prog.assertEquals(Left(NotFound()))
+  }
+
 }
